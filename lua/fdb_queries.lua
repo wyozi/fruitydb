@@ -20,11 +20,6 @@ FDB.SpecifierHandlers = {
 
 function FDB.ParseQuery(query, ...)
 
-    local db = FDB.RawDB()
-    if not db then
-        return
-    end
-
     local params = {... }
 
     local finalQueryTbl = {}
@@ -72,11 +67,13 @@ function FDB.ParseQuery(query, ...)
     return table.concat(finalQueryTbl, "")
 end
 
+local dbmeta = FDB.dbmeta
+
 -- A query that does not block. onSuccess is called if query is succesfully executed and onError if we get an error
-function FDB.Query(onSuccess, onError, query, ...)
+function dbmeta:Query(onSuccess, onError, query, ...)
 
     local fquery = FDB.ParseQuery(query, ...)
-    local db = FDB.RawDB()
+    local db = self:RawDB()
 
     if not fquery or not db then return end
 
@@ -104,10 +101,10 @@ function FDB.Query(onSuccess, onError, query, ...)
 end
 
 -- A query that blocks until we got a result
-function FDB.BlockingQuery(query, ...)
+function dbmeta:BlockingQuery(query, ...)
     local result
 
-    local query = FDB.Query(function(data)
+    local query = self:Query(function(data)
         result = data
     end, query, ...)
     if not query then return end
@@ -117,8 +114,8 @@ function FDB.BlockingQuery(query, ...)
 end
 
 -- A query that blocks until we got some kind of result and then returns with either the result or nil
-function FDB.BQueryFirstRow(query, ...)
-    local res = FDB.BlockingQuery(query, ...)
+function dbmeta:BQueryFirstRow(query, ...)
+    local res = self:BlockingQuery(query, ...)
     if res then
         return res[1]
     end

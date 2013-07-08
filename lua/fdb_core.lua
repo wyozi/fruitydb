@@ -2,9 +2,7 @@ require("mysqloo")
 
 local loaded = mysqloo ~= nil -- boolean returned by require() doesnt seem to be true
 
-if not FDB or not FDB.DontReconnectOnReload then
-    FDB = {}
-end
+FDB = FDB or {}
 FDB.Version = "0.5"
 
 function FDB.Log(msg)
