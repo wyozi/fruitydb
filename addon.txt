@@ -1,0 +1,13 @@
+"AddonInfo"
+{
+	"name"		"Fruity DB"
+	"version"	"1.0"
+	"up_date"	""
+	"author_name"	"Cookie"
+	"author_email"	""
+	"author_url"	"http://icemi.st"
+	"info"		"A simple abstraction layer for MysqlOO"
+
+	"override"	"0"
+
+}
