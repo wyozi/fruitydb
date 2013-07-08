@@ -76,6 +76,7 @@ function dbmeta:Query(onSuccess, onError, query, ...)
 
     local db = self:RawDB()
     local fquery = FDB.ParseQuery(db, query, ...)
+    FDB.Debug(query .. " parsed to " .. fquery)
 
     if not fquery or not db then return end
 
@@ -83,17 +84,17 @@ function dbmeta:Query(onSuccess, onError, query, ...)
 
     local query = db:query(fquery)
     function query:onSuccess(data)
+       FDB.Debug("Query succeeded! #data " .. #data)
        if onSuccess then
           onSuccess(data)
        end
-       FDB.Debug("Query succeeded! #data " .. #data)
     end
 
     function query:onError(err, sql)
+        FDB.Log("Query failed! SQL: " .. sql .. ". Err: " .. err)
         if onError then
             onError(err)
         end
-        FDB.Log("Query failed! SQL: " .. sql .. ". Err: " .. err)
     end
 
     query:start()
@@ -108,7 +109,7 @@ function dbmeta:BlockingQuery(query, ...)
 
     local query = self:Query(function(data)
         result = data
-    end, query, ...)
+    end, _, query, ...)
     if not query then return end
 
     query:wait()
