@@ -17,20 +17,23 @@ function dbmeta:RawDB()
     end
     return FDB.db
 end
-function dbmeta:Connect(host, name, password, db, port, socket)
+function dbmeta:Connect(host, name, password, dba, port, socket)
     host = host or "localhost"
     port = port or 3306
 
-    local db = mysqloo.connect( host, name, password, db, port, socket or "" )
+    local db = mysqloo.connect( host, name, password, dba, port, socket or "" )
+    self.db = db
 
     function db:onConnected()
         FDB.latestdb = self
         self.db = db
+        FDB.Debug( "Connected to database!" )
     end
 
     local toerr
     function db:onConnectionFailed( err )
         toerr = err
+        self.db = nil
         FDB.Error( "Connection to database failed! Error: " .. tostring(err) )
     end
 
