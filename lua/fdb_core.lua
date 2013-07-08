@@ -27,11 +27,15 @@ else
 
     include("fdb_config.lua") -- This must be loaded first always so might as well load it here
 
+    hook.Call("FDBConfigLoaded", GAMEMODE)
+
     local submodules = {"connection", "queries" }
 
     for _,module in ipairs(submodules) do
         include("fdb_" .. module .. ".lua")
         FDB.Debug("Loading module " .. module)
     end
+
+    hook.Call("FDBModulesLoaded", GAMEMODE)
 
 end
