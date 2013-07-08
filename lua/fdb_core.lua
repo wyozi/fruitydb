@@ -2,9 +2,7 @@ require("mysqloo")
 
 local loaded = mysqloo ~= nil -- boolean returned by require() doesnt seem to be true
 
-if FDB.DontReconnectOnReload then
-    FDB = FDB or {}
-else
+if not FDB or not FDB.DontReconnectOnReload then
     FDB = {}
 end
 FDB.Version = "0.5"
@@ -27,7 +25,9 @@ else
 
     FDB.Log("Loading FruityDB version " .. tostring(FDB.Version))
 
-    local submodules = {"config", "connection", "queries" }
+    include("fdb_config.lua") -- This must be loaded first always so might as well load it here
+
+    local submodules = {"connection", "queries" }
 
     for _,module in ipairs(submodules) do
         include("fdb_" .. module .. ".lua")
