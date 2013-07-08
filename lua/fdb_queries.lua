@@ -18,7 +18,9 @@ FDB.SpecifierHandlers = {
     end
 }
 
-function FDB.ParseQuery(query, ...)
+-- TODO get rid of db requirement (is required for db:escape)
+
+function FDB.ParseQuery(db, query, ...)
 
     local params = {... }
 
@@ -72,8 +74,8 @@ local dbmeta = FDB.dbmeta
 -- A query that does not block. onSuccess is called if query is succesfully executed and onError if we get an error
 function dbmeta:Query(onSuccess, onError, query, ...)
 
-    local fquery = FDB.ParseQuery(query, ...)
     local db = self:RawDB()
+    local fquery = FDB.ParseQuery(db, query, ...)
 
     if not fquery or not db then return end
 

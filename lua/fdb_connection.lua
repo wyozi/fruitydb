@@ -1,6 +1,6 @@
 
-local dbmeta = {}
-FDB.dbmeta = dbmeta
+FDB.dbmeta = FDB.dbmeta or {}
+local dbmeta = FDB.dbmeta
 
 function dbmeta:IsConnected()
     return self.db ~= nil
@@ -10,12 +10,12 @@ function FDB.IsConnected()
 end
 
 function dbmeta:RawDB()
-    if not self.IsConnected() then
+    if not self:IsConnected() then
         local config = FDB.Config
         FDB.Connect(config.host, config.name, config.password, config.database, config.port)
-        return FDB.db
+        return self.db
     end
-    return FDB.db
+    return self.db
 end
 function dbmeta:Connect(host, name, password, dba, port, socket)
     host = host or "localhost"
