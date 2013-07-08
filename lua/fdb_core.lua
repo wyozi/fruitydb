@@ -2,14 +2,12 @@ require("mysqloo")
 
 local loaded = mysqloo ~= nil -- boolean returned by require() doesnt seem to be true
 
-local ConnectionlessDev = true -- allows reloading without reconnecting. Suggested for initial dev phase
-
-if ConnectionlessDev then
+if FDB.DontReconnectOnReload then
     FDB = FDB or {}
 else
     FDB = {}
 end
-FDB.Version = "1.00"
+FDB.Version = "0.5"
 
 function FDB.Log(msg)
     MsgN("[FruityDB] " .. tostring(msg))

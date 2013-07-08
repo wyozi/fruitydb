@@ -1,6 +1,8 @@
 
+-- A symbol that precedes 'placeholder' variables in query
 FDB.ParamChar = "%" -- must be 1 char
 
+-- The placeholder variables that can be used in a query
 FDB.SpecifierHandlers = {
     ["s"] = function(db, param)
         return "'" .. (db:escape(param) or "") .. "'"
@@ -67,7 +69,8 @@ function FDB.ParseQuery(query, ...)
     return table.concat(finalQueryTbl, "")
 end
 
-function FDB.SlowQuery(success, query, ...)
+-- A query that does not block. onSuccess is called if query is succesfully executed and onError if we get an error
+function FDB.Query(onSuccess, onError, query, ...)
 
     local fquery = FDB.ParseQuery(query, ...)
     local db = FDB.RawDB()
@@ -78,13 +81,16 @@ function FDB.SlowQuery(success, query, ...)
 
     local query = db:query(fquery)
     function query:onSuccess(data)
-       if success then
-          success(data)
+       if onSuccess then
+          onSuccess(data)
        end
        FDB.Debug("Query succeeded! #data " .. #data)
     end
 
     function query:onError(err, sql)
+        if onError then
+            onError(err)
+        end
         FDB.Log("Query failed! SQL: " .. sql .. ". Err: " .. err)
     end
 
@@ -94,10 +100,11 @@ function FDB.SlowQuery(success, query, ...)
 
 end
 
-function FDB.InstaQuery(query, ...)
+-- A query that blocks until we got a result
+function FDB.BlockingQuery(query, ...)
     local result
 
-    local query = FDB.SlowQuery(function(data)
+    local query = FDB.Query(function(data)
         result = data
     end, query, ...)
     if not query then return end
@@ -106,8 +113,9 @@ function FDB.InstaQuery(query, ...)
     return result
 end
 
-function FDB.InstaQueryFirstRow(query, ...)
-    local res = FDB.InstaQuery(query, ...)
+-- A query that blocks until we got some kind of result and then returns with either the result or nil
+function FDB.BQueryFirstRow(query, ...)
+    local res = FDB.BlockingQuery(query, ...)
     if res then
         return res[1]
     end
