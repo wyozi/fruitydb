@@ -12,6 +12,9 @@ FDB.SpecifierHandlers = {
     end,
     ["d"] = function(db, param)
         return tonumber(param) or error("Unable to convert " .. param .. " to number")
+    end,
+    ["l"] = function(db, param) -- Literal
+        return param
     end
 }
 
