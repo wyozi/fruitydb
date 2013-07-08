@@ -34,6 +34,10 @@ function FDB.RawDB()
 end
 
 hook.Add("Initialize", "FDB_Connect", function()
+    if not FDB.ConnectOnInitialize then
+        FDB.Debug("Initialize hook called but not connecting because of FDB.ConnectOnInitialize") -- Useful if some dev ever forgets this
+        return
+    end
     if FDB.Config then
         FDB.Debug("Connecting to database")
         local config = FDB.Config

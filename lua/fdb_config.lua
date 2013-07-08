@@ -1,9 +1,9 @@
 
--- To use FruityDB, you normally need to set FDB.Config table before ´Initialization´ hook would get called, so putting your database values to layout below this comment works fine.
+-- To use FruityDB, you normally need to set FDB.Config table before ´Initialize´ hook would get called, so putting your database values to layout below this comment works fine.
 -- To prevent leaking the values, the sensitive details are automatically cleared in memory after connecting to database. Therefore if you lose connection the map needs to change before
 -- the database connection is reinstated.
 --
--- Setting FDB.Unsafe to "true" allows reconnecting immediately on connection loss and connecting after ´Initialization´ hook, but can potentially be more unsecure.
+-- Setting FDB.Unsafe to "true" allows reconnecting immediately on connection loss and connecting after ´Initialize´ hook, but can potentially be more unsecure.
 
 FDB.Config = {
     host = "localhost",
@@ -16,6 +16,9 @@ FDB.Config = {
 -- If Unsafe is enabled, database settings are retained in memory so reconnecting to database is possible without map change.
 -- However it can potentially be much more unsecure so be sure you know what you're doing.
 FDB.Unsafe = true
+
+-- Should we connect in ´Initialize´ hook. Automatically 'true' if Unsafe is disabled.
+FDB.ConnectOnInitialize = true
 
 -- Prints database calls to server console.
 FDB.DebugMode = true
