@@ -49,23 +49,3 @@ function FDB.Connect(host, name, password, db, port, socket)
     end
     return dbtbl
 end
-
-hook.Add("Initialize", "FDB_Connect", function()
-    if not FDB.ConnectOnInitialize then
-        FDB.Debug("Initialize hook called but not connecting because of FDB.ConnectOnInitialize") -- Useful if some dev ever forgets this
-        return
-    end
-    if FDB.Config then
-        FDB.Debug("Connecting to database")
-        local config = FDB.Config
-        local status = FDB.Connect(config.host, config.name, config.password, config.database, config.port, config.socket)
-        FDB.Debug("DB Connection succeeded: " .. tostring(status))
-
-        if not FDB.Unsafe then -- We're not running Unsafe mode so we need to remove Config here to prevent leaking it by "ulx luarun" for example
-            FDB.Config = nil
-        end
-
-    elseif not FDB.Unsafe then
-       FDB.Error("To connect to database you need to set FDB.Config table at the beginning. See fdb_config.lua for more information!")
-    end
-end)
