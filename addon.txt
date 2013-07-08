@@ -3,9 +3,9 @@
 	"name"		"Fruity DB"
 	"version"	"1.0"
 	"up_date"	""
-	"author_name"	"Cookie"
+	"author_name"	"Wyozi"
 	"author_email"	""
-	"author_url"	"http://icemi.st"
+	"author_url"	"http://www.github.com/wyozi/fruitydb"
 	"info"		"A simple abstraction layer for MysqlOO"
 
 	"override"	"0"
