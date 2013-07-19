@@ -195,3 +195,7 @@ function dbmeta:Insert(sqltable, datamap)
     end)
     self:Query(_, _, "INSERT INTO %b %a VALUES %t;", sqltable, keys, values)
 end
+
+function dbmeta:Delete(sqltable, condition, ...)
+    self:Query(_, _, "DELETE FROM %b WHERE %l;", sqltable, FDB.ParseQuery(self:RawDB(), condition, ...))
+end
