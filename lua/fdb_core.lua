@@ -16,6 +16,9 @@ end
 function FDB.Error(msg)
     ErrorNoHalt("[FruityDB] " .. tostring(msg))
 end
+function FDB.Warn(msg)
+    FDB.Error(msg)
+end
 
 if not loaded then
     FDB.Error("Failed to load MysqlOO!")

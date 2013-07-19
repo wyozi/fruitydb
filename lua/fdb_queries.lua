@@ -14,7 +14,49 @@ FDB.SpecifierHandlers = {
         return tonumber(param) or error("Unable to convert " .. param .. " to number")
     end,
     ["l"] = function(db, param) -- Literal
-        return param
+        return tostring(param)
+    end,
+    ["b"] = function(db, param) -- Backticks
+        return "`" .. tostring(param) .. "`"
+    end,
+    ["t"] = function(db, param) -- List of things that need to be escaped
+        if type(param) ~= "table" then error("Passed param is not table") end
+        local s = "("
+        local widx = 0
+        for k,v in pairs(param) do
+            if widx > 0 then
+                s = s .. ", "
+            end
+            local handler
+            if type(v) == "string" then handler = "s"
+            elseif type(v) == "number" then handler = "d"
+            elseif type(v) == "table" then handler = "t"
+            end
+
+            if not handler then
+                error("Couldn't find list handler for " .. type(v))
+                return
+            end
+
+            s = s .. FDB.SpecifierHandlers[handler](db, v)
+            widx = widx + 1
+        end
+        s = s .. ")"
+        return s 
+    end,
+    ["a"] = function(db, param) -- Array of arguments. NOT ESCAPED!!
+        if type(param) ~= "table" then error("Passed param is not table") end
+        local s = "("
+        local widx = 0
+        for k,v in pairs(param) do
+            if widx > 0 then
+                s = s .. ", "
+            end
+            s = s .. FDB.SpecifierHandlers["b"](db, v)
+            widx = widx + 1
+        end
+        s = s .. ")"
+        return s 
     end
 }
 
@@ -52,7 +94,7 @@ function FDB.ParseQuery(db, query, ...)
             table.insert(finalQueryTbl, err)
             nthSpecifier = nthSpecifier + 1
         else
-            FDB.Log("Warning! Undefined specifier in " .. query .. ": " .. specifier .. ". Ignoring and thus possibly corrupting something..")
+            FDB.Warn("Warning! Undefined specifier in " .. query .. ": " .. specifier .. ". Ignoring and thus possibly corrupting something..")
         end
 
         if postfix and postfix ~= "" then
@@ -91,9 +133,9 @@ function dbmeta:Query(onSuccess, onError, query, ...)
     end
 
     function query:onError(err, sql)
-        FDB.Log("Query failed! SQL: " .. sql .. ". Err: " .. err)
+        FDB.Warn("Query failed! SQL: " .. sql .. ". Err: " .. err)
         if onError then
-            onError(err)
+            onError(err, sql)
         end
     end
 
@@ -107,20 +149,49 @@ end
 function dbmeta:BlockingQuery(query, ...)
     local result
 
-    local query = self:Query(function(data)
+    local err
+
+    local query = self:Query(function(data) -- onSuccess
         result = data
-    end, _, query, ...)
+    end,
+    function(nerr) err = nerr end, -- onError
+    query, ...)
+
     if not query then return end
 
     query:wait()
+
+    if err then
+        return false, err
+    end
+
     return result
 end
 
 -- A query that blocks until we got some kind of result and then returns with either the result or nil
 function dbmeta:BQueryFirstRow(query, ...)
-    local res = self:BlockingQuery(query, ...)
+    local res, err = self:BlockingQuery(query, ...)
     if res then
         return res[1]
     end
-    return nil
+    return false, err
+end
+
+function dbmeta:BQueryFirstField(query, ...)
+    local res, err = self:BlockingQuery(query, ...)
+    if res then
+        local firstrow = res[1]
+        local fkey = table.GetFirstKey(firstrow)
+        return firstrow[fkey]
+    end
+    return false, err
+end
+
+function dbmeta:Insert(sqltable, datamap)
+    local keys, values = {}, {}
+    table.foreach(datamap, function(k, v)
+        table.insert(keys, k)
+        table.insert(values, v)
+    end)
+    self:Query(_, _, "INSERT INTO %b %a VALUES %t;", sqltable, keys, values)
 end
