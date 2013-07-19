@@ -14,7 +14,7 @@ function FDB.Debug(msg)
     end
 end
 function FDB.Error(msg)
-    Error("[FruityDB] " .. tostring(msg))
+    ErrorNoHalt("[FruityDB] " .. tostring(msg))
 end
 
 if not loaded then
