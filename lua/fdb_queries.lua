@@ -1,6 +1,6 @@
 
 -- A symbol that precedes 'placeholder' variables in query
-FDB.ParamChar = "%" -- must be 1 char
+FDB.ParamChar = "%" -- must be a single char
 
 -- The placeholder variables that can be used in a query
 FDB.SpecifierHandlers = {

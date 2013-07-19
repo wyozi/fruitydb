@@ -9,7 +9,7 @@ function FDB.Log(msg)
     MsgN("[FruityDB] " .. tostring(msg))
 end
 function FDB.Debug(msg)
-    if FDB.DebugMode then
+    if FDB.IsDebug() then
         FDB.Log(msg)
     end
 end
