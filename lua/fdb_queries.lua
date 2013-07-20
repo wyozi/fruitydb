@@ -200,11 +200,11 @@ function dbmeta:Insert(sqltable, datamap)
         table.insert(keys, k)
         table.insert(values, v)
     end)
-    self:Query(_, _, "INSERT INTO %b %tb VALUES %to;", sqltable, keys, values)
+    return self:Query(_, _, "INSERT INTO %b %tb VALUES %to;", sqltable, keys, values)
 end
 
 function dbmeta:Delete(sqltable, condition, ...)
-    self:Query(_, _, "DELETE FROM %b WHERE %l;", sqltable, FDB.ParseQuery(self:RawDB(), condition, ...))
+    return self:Query(_, _, "DELETE FROM %b WHERE %l;", sqltable, FDB.ParseQuery(self:RawDB(), condition, ...))
 end
 
 function dbmeta:GetInsertedId()
