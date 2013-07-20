@@ -20,8 +20,9 @@ end
 function dbmeta:Connect(host, name, password, dba, port, socket)
     host = host or "localhost"
     port = port or 3306
+    socket = socket or ""
 
-    local db = mysqloo.connect( host, name, password, dba, port, socket or "" )
+    local db = mysqloo.connect( host, name, password, dba, port, socket )
     self.db = db
 
     function db:onConnected()
