@@ -5,16 +5,22 @@ local loaded = mysqloo ~= nil -- boolean returned by require() doesnt seem to be
 FDB = FDB or {}
 FDB.Version = "0.5"
 
-function FDB.Log(msg)
-    MsgN("[FruityDB] " .. tostring(msg))
+function FDB.Log(msg, tag)
+    -- Again, this if structure looks a bit overcomplicated but it's to ensure as little string manipulations with as little code obfuscation
+    -- as possible
+    if tag then
+        MsgN("[FruityDB " .. tag .. "] " .. msg)
+    else
+        MsgN("[FruityDB] " .. msg)
+    end
 end
 function FDB.Debug(msg)
     if FDB.IsDebug() then
-        FDB.Log(msg)
+        FDB.Log(msg, "debug")
     end
 end
 function FDB.Error(msg)
-    ErrorNoHalt("[FruityDB] " .. tostring(msg))
+    ErrorNoHalt("[FruityDB] " .. tostring(msg) .. "\n")
 end
 function FDB.Warn(msg)
     FDB.Error(msg)

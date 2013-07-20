@@ -2,16 +2,34 @@
 -- A symbol that precedes 'placeholder' variables in query
 FDB.ParamChar = "%" -- must be a single char
 
--- The placeholder variables that can be used in a query
-FDB.SpecifierHandlers = {
+-- A helper function for placeholder variables
+function FDB.CreateTableHandler(handler)
+    return function(db, param) -- Table of objects
+        if type(param) ~= "table" then error("Passed param is not table") end
+        local s = "("
+        local widx = 0
+        for k,v in pairs(param) do
+            if widx > 0 then
+                s = s .. ", "
+            end
+            s = s .. FDB.PlaceholderVariables[handler](db, v)
+            widx = widx + 1
+        end
+        s = s .. ")"
+        return s 
+    end
+end
+
+-- The variables that can be used in a query in place of data
+FDB.PlaceholderVariables = {
     ["s"] = function(db, param)
         return "'" .. (db:escape(param) or "") .. "'"
     end,
     ["i"] = function(db, param)
-        return tonumber(param) or error("Unable to convert " .. param .. " to number")
+        return tonumber(param) or error("Unable to convert " .. tostring(param) .. " to number")
     end,
     ["d"] = function(db, param)
-        return tonumber(param) or error("Unable to convert " .. param .. " to number")
+        return tonumber(param) or error("Unable to convert " .. tostring(param) .. " to number")
     end,
     ["l"] = function(db, param) -- Literal
         return tostring(param)
@@ -19,45 +37,17 @@ FDB.SpecifierHandlers = {
     ["b"] = function(db, param) -- Backticks
         return "`" .. tostring(param) .. "`"
     end,
-    ["t"] = function(db, param) -- List of things that need to be escaped
-        if type(param) ~= "table" then error("Passed param is not table") end
-        local s = "("
-        local widx = 0
-        for k,v in pairs(param) do
-            if widx > 0 then
-                s = s .. ", "
-            end
-            local handler
-            if type(v) == "string" then handler = "s"
-            elseif type(v) == "number" then handler = "d"
-            elseif type(v) == "table" then handler = "t"
-            end
-
-            if not handler then
-                error("Couldn't find list handler for " .. type(v))
-                return
-            end
-
-            s = s .. FDB.SpecifierHandlers[handler](db, v)
-            widx = widx + 1
-        end
-        s = s .. ")"
-        return s 
+    ["o"] = function(db, param) -- Object
+        local t = type(param)
+        local handler
+        if t == "string" then handler = "s"
+        elseif t == "number" then handler = "d"
+        elseif t == "table" then handler = "t" end
+        if not handler then error("Couldn't find object handler for " .. t) end
+        return FDB.PlaceholderVariables[handler](db, param)
     end,
-    ["a"] = function(db, param) -- Array of arguments. NOT ESCAPED!!
-        if type(param) ~= "table" then error("Passed param is not table") end
-        local s = "("
-        local widx = 0
-        for k,v in pairs(param) do
-            if widx > 0 then
-                s = s .. ", "
-            end
-            s = s .. FDB.SpecifierHandlers["b"](db, v)
-            widx = widx + 1
-        end
-        s = s .. ")"
-        return s 
-    end
+    ["to"] = FDB.CreateTableHandler("o"),
+    ["tb"] = FDB.CreateTableHandler("b")
 }
 
 -- TODO get rid of db requirement (is required for db:escape)
@@ -72,13 +62,13 @@ function FDB.ParseQuery(db, query, ...)
 
     local errored
 
-    local _, matches = query:gsub( "([^%" .. FDB.ParamChar .. "]*)%" .. FDB.ParamChar .. "([%.%d]*[%a])([^%" .. FDB.ParamChar .. "]*)", function( prefix, tag, postfix )
+    local _, matches = query:gsub( "([^%" .. FDB.ParamChar .. "]*)%" .. FDB.ParamChar .. "([%a]+)([^%" .. FDB.ParamChar .. "]*)", function( prefix, tag, postfix )
         if prefix and prefix ~= "" then
             table.insert(finalQueryTbl, prefix)
         end
 
-        local specifier = tag:sub( -1, -1 )
-        local sphandler = FDB.SpecifierHandlers[specifier]
+        local specifier = tag
+        local sphandler = FDB.PlaceholderVariables[specifier]
 
         if sphandler then
             local param = params[nthSpecifier]
@@ -117,16 +107,33 @@ local dbmeta = FDB.dbmeta
 function dbmeta:Query(onSuccess, onError, query, ...)
 
     local db = self:RawDB()
+    if not db then
+        FDB.Error("RawDB not available!")
+    end
+
     local fquery = FDB.ParseQuery(db, query, ...)
-    FDB.Debug(query .. " parsed to " .. fquery)
+    if not fquery then
+        FDB.Warn("Query not executed: fquery is nil")
+        return
+    end
 
-    if not fquery or not db then return end
+    if FDB.IsDebug() then -- We double check for debug mode here because string operations are expensive-ish
+        FDB.Debug(query .. " parsed to " .. fquery)
+        FDB.Debug("Starting query " .. fquery)
+    end
 
-    FDB.Debug("Starting query " .. fquery)
+    local fdbself = self -- store self here, because we cant access 'self' from onSuccess
 
     local query = db:query(fquery)
     function query:onSuccess(data)
-       FDB.Debug("Query succeeded! #data " .. #data)
+       fdbself.LastAffectedRows = query:affectedRows()
+       fdbself.LastAutoIncrement = query:lastInsert()
+       fdbself.LastRowCount = #data
+
+       if FDB.IsDebug() then -- We double check for debug mode here because string operations are expensive-ish
+           FDB.Debug("Query succeeded! AffectedRows " .. tostring(fdbself:GetAffectedRows()) .. " InsertedId " .. tostring(fdbself:GetInsertedId()) ..
+                     " RowCount " .. tostring(fdbself:GetRowCount()))
+       end
        if onSuccess then
           onSuccess(data)
        end
@@ -193,9 +200,35 @@ function dbmeta:Insert(sqltable, datamap)
         table.insert(keys, k)
         table.insert(values, v)
     end)
-    self:Query(_, _, "INSERT INTO %b %a VALUES %t;", sqltable, keys, values)
+    self:Query(_, _, "INSERT INTO %b %tb VALUES %to;", sqltable, keys, values)
 end
 
 function dbmeta:Delete(sqltable, condition, ...)
     self:Query(_, _, "DELETE FROM %b WHERE %l;", sqltable, FDB.ParseQuery(self:RawDB(), condition, ...))
+end
+
+function dbmeta:GetInsertedId()
+    return self.LastAutoIncrement
+end
+
+function dbmeta:GetAffectedRows()
+    return self.LastAffectedRows or 0
+end
+
+function dbmeta:GetRowCount()
+    return self.LastRowCount
+end
+
+-- Transaction stuff
+
+function dbmeta:StartTransaction()
+    return self:BlockingQuery("START TRANSACTION;") ~= false
+end
+
+function dbmeta:Commit()
+    return self:BlockingQuery("COMMIT;") ~= false
+end
+
+function dbmeta:Rollback()
+    return self:BlockingQuery("ROLLBACK;") ~= false
 end
