@@ -23,7 +23,7 @@ function FDB.Error(msg)
     ErrorNoHalt("[FruityDB] " .. tostring(msg) .. "\n")
 end
 function FDB.Warn(msg)
-    FDB.Error(msg)
+    FDB.Log(msg, "WARNING")
 end
 
 if not loaded then
