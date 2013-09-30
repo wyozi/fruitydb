@@ -103,55 +103,6 @@ end
 
 local dbmeta = FDB.dbmeta
 
--- A query that does not block. onSuccess is called if query is succesfully executed and onError if we get an error
-function dbmeta:Query(onSuccess, onError, query, ...)
-
-    local db = self:RawDB()
-    if not db then
-        FDB.Error("RawDB not available!")
-    end
-
-    local fquery = FDB.ParseQuery(db, query, ...)
-    if not fquery then
-        FDB.Warn("Query not executed: fquery is nil")
-        return
-    end
-
-    if FDB.IsDebug() then -- We double check for debug mode here because string operations are expensive-ish
-        FDB.Debug(query .. " parsed to " .. fquery)
-        FDB.Debug("Starting query " .. fquery)
-    end
-
-    local fdbself = self -- store self here, because we cant access 'self' from onSuccess
-
-    local query = db:query(fquery)
-    function query:onSuccess(data)
-       fdbself.LastAffectedRows = query:affectedRows()
-       fdbself.LastAutoIncrement = query:lastInsert()
-       fdbself.LastRowCount = #data
-
-       if FDB.IsDebug() then -- We double check for debug mode here because string operations are expensive-ish
-           FDB.Debug("Query succeeded! AffectedRows " .. tostring(fdbself:GetAffectedRows()) .. " InsertedId " .. tostring(fdbself:GetInsertedId()) ..
-                     " RowCount " .. tostring(fdbself:GetRowCount()))
-       end
-       if onSuccess then
-          onSuccess(data)
-       end
-    end
-
-    function query:onError(err, sql)
-        FDB.Warn("Query failed! SQL: " .. sql .. ". Err: " .. err)
-        if onError then
-            onError(err, sql)
-        end
-    end
-
-    query:start()
-
-    return query
-
-end
-
 -- A query that blocks until we got a result
 function dbmeta:BlockingQuery(query, ...)
     local result
