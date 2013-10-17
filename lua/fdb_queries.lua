@@ -20,8 +20,7 @@ function FDB.CreateTableHandler(handler)
     end
 end
 
--- Escape a string. Uses Garry's Mod's built-in escape function
-
+-- Escape a string. Also adds single quotations around your queries. Uses Garry's Mod's built-in escape function
 function FDB.EscapeString(str)
     return sql.SQLStr(str) 
 end
@@ -29,7 +28,7 @@ end
 -- The variables that can be used in a query in place of data
 FDB.PlaceholderVariables = {
     ["s"] = function(param)
-        return "'" .. (FDB.EscapeString(param) or "") .. "'"
+        return (FDB.EscapeString(param) or "")
     end,
     ["i"] = function(param)
         return tonumber(param) or error("Unable to convert " .. tostring(param) .. " to number")

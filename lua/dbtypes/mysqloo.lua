@@ -29,7 +29,7 @@ function DATABASE:Connect(details)
 								details.password,
 								details.database,
 								details.port or 3306,
-								details.socket)
+								details.socket or "")
 	self.db = db
 
 	function db:onConnected()

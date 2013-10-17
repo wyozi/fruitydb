@@ -27,7 +27,7 @@ function DATABASE:Query(onSuccess, onError, query, ...)
 	end
 
 	local query = sql.Query(query)
-	if query then
+	if query ~= false then
 		if FDB.IsDebug() then -- We double check for debug mode here because string operations are expensive-ish
 			FDB.Debug("Query succeeded!")
 		end
