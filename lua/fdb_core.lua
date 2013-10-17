@@ -1,5 +1,5 @@
 FDB = FDB or {}
-FDB.Version = "0.7"
+FDB.Version = "1.0"
 FDB.ForceVersion = "sqlite"
 
 function FDB.Log(msg, tag)
@@ -13,7 +13,7 @@ function FDB.Log(msg, tag)
 end
 function FDB.Debug(msg)
     if FDB.IsDebug() then
-        FDB.Log(msg, "debug")
+        FDB.Log(msg, "Debug")
     end
 end
 function FDB.Error(msg)
@@ -29,21 +29,32 @@ include("fdb_config.lua") -- This must be loaded first always so might as well l
 
 hook.Call("FDBConfigLoaded", GAMEMODE)
 
-local submodules = {"connection", "queries" }
+do -- Load modules
 
-for _,module in ipairs(submodules) do
-    include("fdb_" .. module .. ".lua")
-    FDB.Debug("Loading module " .. module)
+    local submodules = {"connection", "queries" }
+
+    for _,module in ipairs(submodules) do
+        include("fdb_" .. module .. ".lua")
+        FDB.Debug("Loading module " .. module)
+    end
 end
 
-pcall(require, "mysqloo")
+do -- Load database types
+    local dbtypes = {"mysqloo", "sqlite"}
 
-if mysqloo ~= nil then -- boolean returned by require() doesnt seem to be true
-    include("fdb_mysqloo.lua")
-    FDB.Log("Loading FruityDB MysqlOO version")
-else
-    include("fdb_sqlite.lua")
-    FDB.Log("Loading FruityDB SQLite version")
+    FDB.DatabaseTypes = {}
+    FDB.RegisterDatabase = function(dbtype, tbl)
+        FDB.DatabaseTypes[dbtype] = tbl
+        setmetatable(tbl, FDB.dbmeta) -- Set dbmeta as the metatable
+        tbl.__index = tbl -- tbl is to be used as a metatable as well
+
+        FDB.Debug("Registered database type " .. dbtype)
+    end
+
+    for _,dbtype in ipairs(dbtypes) do
+        FDB.Debug("Loading dbtype " .. dbtype)
+        include("dbtypes/" .. dbtype.. ".lua")
+    end
 end
 
 hook.Call("FDBModulesLoaded", GAMEMODE)

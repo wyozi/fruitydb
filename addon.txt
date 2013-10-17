@@ -1,12 +1,12 @@
 "AddonInfo"
 {
 	"name"		"Fruity DB"
-	"version"	"0.5"
+	"version"	"1.0"
 	"up_date"	""
 	"author_name"	"Wyozi"
 	"author_email"	""
 	"author_url"	"http://www.github.com/wyozi/fruitydb"
-	"info"		"A simple abstraction layer for MysqlOO"
+	"info"		"A simple abstraction layer for Garry's Mod database engines"
 
 	"override"	"0"
 
