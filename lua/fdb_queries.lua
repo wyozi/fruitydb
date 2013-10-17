@@ -4,7 +4,7 @@ FDB.ParamChar = "%" -- must be a single char
 
 -- A helper function for placeholder variables
 function FDB.CreateTableHandler(handler)
-    return function(db, param) -- Table of objects
+    return function(param) -- Table of objects
         if type(param) ~= "table" then error("Passed param is not table") end
         local s = "("
         local widx = 0
@@ -12,7 +12,7 @@ function FDB.CreateTableHandler(handler)
             if widx > 0 then
                 s = s .. ", "
             end
-            s = s .. FDB.PlaceholderVariables[handler](db, v)
+            s = s .. FDB.PlaceholderVariables[handler](v)
             widx = widx + 1
         end
         s = s .. ")"
@@ -20,29 +20,35 @@ function FDB.CreateTableHandler(handler)
     end
 end
 
+-- Escape a string. Uses Garry's Mod's built-in escape function
+
+function FDB.EscapeString(str)
+    return sql.SQLStr(str) 
+end
+
 -- The variables that can be used in a query in place of data
 FDB.PlaceholderVariables = {
-    ["s"] = function(db, param)
-        return "'" .. (db:escape(param) or "") .. "'"
+    ["s"] = function(param)
+        return "'" .. (FDB.EscapeString(param) or "") .. "'"
     end,
-    ["i"] = function(db, param)
+    ["i"] = function(param)
         return tonumber(param) or error("Unable to convert " .. tostring(param) .. " to number")
     end,
-    ["d"] = function(db, param)
+    ["d"] = function(param)
         return tonumber(param) or error("Unable to convert " .. tostring(param) .. " to number")
     end,
-    ["l"] = function(db, param) -- Literal
+    ["l"] = function(param) -- Literal
         return tostring(param)
     end,
-    ["b"] = function(db, param) -- Backticks
+    ["b"] = function(param) -- Backticks
         return "`" .. tostring(param) .. "`"
     end,
-    ["o"] = function(db, param) -- Object
+    ["o"] = function(param) -- Object
         local t = type(param)
         local handler
         if t == "string" then handler = "s"
         elseif t == "number" then handler = "d"
-        elseif t == "table" then handler = "t" end
+        elseif t == "table" then handler = "to" end
         if not handler then error("Couldn't find object handler for " .. t) end
         return FDB.PlaceholderVariables[handler](db, param)
     end,
@@ -52,7 +58,7 @@ FDB.PlaceholderVariables = {
 
 -- TODO get rid of db requirement (is required for db:escape)
 
-function FDB.ParseQuery(db, query, ...)
+function FDB.ParseQuery(query, ...)
 
     local params = {... }
 
@@ -73,7 +79,7 @@ function FDB.ParseQuery(db, query, ...)
         if sphandler then
             local param = params[nthSpecifier]
 
-            local status, err = pcall(sphandler, db, param)
+            local status, err = pcall(sphandler, param)
             if not status then
                 errored = "Error while processing \"" .. query .. "\"'s sp " .. specifier .. " with param \"" .. tostring(param) .. "\": " .. err
                 return
@@ -156,30 +162,4 @@ end
 
 function dbmeta:Delete(sqltable, condition, ...)
     return self:Query(_, _, "DELETE FROM %b WHERE %l;", sqltable, FDB.ParseQuery(self:RawDB(), condition, ...))
-end
-
-function dbmeta:GetInsertedId()
-    return self.LastAutoIncrement
-end
-
-function dbmeta:GetAffectedRows()
-    return self.LastAffectedRows or 0
-end
-
-function dbmeta:GetRowCount()
-    return self.LastRowCount
-end
-
--- Transaction stuff
-
-function dbmeta:StartTransaction()
-    return self:BlockingQuery("START TRANSACTION;") ~= false
-end
-
-function dbmeta:Commit()
-    return self:BlockingQuery("COMMIT;") ~= false
-end
-
-function dbmeta:Rollback()
-    return self:BlockingQuery("ROLLBACK;") ~= false
 end
