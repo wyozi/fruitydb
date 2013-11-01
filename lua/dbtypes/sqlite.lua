@@ -31,6 +31,8 @@ function DATABASE:Query(onSuccess, onError, query, ...)
 		if FDB.IsDebug() then -- We double check for debug mode here because string operations are expensive-ish
 			FDB.Debug("Query succeeded!")
 		end
+		local laid = sql.QueryValue("SELECT last_insert_rowid()")
+		self.LastAutoIncrement = tonumber(laid) 
 		if onSuccess then
 			onSuccess(query)
 		end
@@ -45,6 +47,10 @@ function DATABASE:Query(onSuccess, onError, query, ...)
 	return {
 		wait = function() end -- Workaround for blocking queries, sqlite queries block by default so we don't actually need to do anything here
 	}
+end
+
+function DATABASE:GetInsertedId()
+	return self.LastAutoIncrement
 end
 
 -- TODO, we could fake transactions by adding queries to a table until commit/fallback
