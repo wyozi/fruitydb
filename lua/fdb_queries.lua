@@ -6,17 +6,11 @@ FDB.ParamChar = "%" -- must be a single char
 function FDB.CreateTableHandler(handler)
     return function(param) -- Table of objects
         if type(param) ~= "table" then error("Passed param is not table") end
-        local s = "("
-        local widx = 0
+        local param_table = {}
         for k,v in pairs(param) do
-            if widx > 0 then
-                s = s .. ", "
-            end
-            s = s .. FDB.PlaceholderVariables[handler](v)
-            widx = widx + 1
+            table.insert(param_table, FDB.PlaceholderVariables[handler](v))
         end
-        s = s .. ")"
-        return s 
+        return "(" .. table.concat(param_table, ",") .. ")"
     end
 end
 
@@ -49,7 +43,7 @@ FDB.PlaceholderVariables = {
         elseif t == "number" then handler = "d"
         elseif t == "table" then handler = "to" end
         if not handler then error("Couldn't find object handler for " .. t) end
-        return FDB.PlaceholderVariables[handler](db, param)
+        return FDB.PlaceholderVariables[handler](param)
     end,
     ["to"] = FDB.CreateTableHandler("o"),
     ["tb"] = FDB.CreateTableHandler("b")
