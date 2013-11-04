@@ -26,15 +26,15 @@ function DATABASE:Query(onSuccess, onError, query, ...)
 		FDB.Debug("Starting query " .. fquery)
 	end
 
-	local query = sql.Query(query)
-	if query ~= false then
+	local slquery = sql.Query(fquery)
+	if slquery ~= false then
 		if FDB.IsDebug() then -- We double check for debug mode here because string operations are expensive-ish
 			FDB.Debug("Query succeeded!")
 		end
 		local laid = sql.QueryValue("SELECT last_insert_rowid()")
 		self.LastAutoIncrement = tonumber(laid) 
 		if onSuccess then
-			onSuccess(query)
+			onSuccess(slquery)
 		end
 	else
 		local err = sql.LastError()
