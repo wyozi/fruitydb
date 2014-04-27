@@ -34,6 +34,8 @@ function DATABASE:Query(onSuccess, onError, query, ...)
 		end
 		local laid = sql.QueryValue("SELECT last_insert_rowid()")
 		self.LastAutoIncrement = tonumber(laid) 
+		local affected = sql.QueryValue("SELECT changes()")
+		self.LastAffectedRows = tonumber(affected) 
 		if onSuccess then
 			onSuccess(slquery)
 		end
@@ -52,6 +54,10 @@ end
 
 function DATABASE:GetInsertedId()
 	return self.LastAutoIncrement
+end
+
+function DATABASE:GetAffectedRows()
+	return self.LastAffectedRows or 0
 end
 
 -- TODO, we could fake transactions by adding queries to a table until commit/fallback
