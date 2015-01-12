@@ -1,5 +1,5 @@
 FDB = FDB or {}
-FDB.Version = "1.0"
+FDB.Version = "1.1"
 FDB.ForceVersion = "sqlite"
 
 function FDB.Log(msg, tag)
@@ -40,7 +40,7 @@ do -- Load modules
 end
 
 do -- Load database types
-    local dbtypes = {"mysqloo", "sqlite"}
+    local dbtypes = {"mysqloo", "tmysql4", "sqlite"}
 
     FDB.DatabaseTypes = {}
     FDB.RegisterDatabase = function(dbtype, tbl)

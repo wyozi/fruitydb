@@ -52,13 +52,9 @@ FDB.PlaceholderVariables = {
 -- TODO get rid of db requirement (is required for db:escape)
 
 function FDB.ParseQuery(query, ...)
-
     local params = {... }
-
     local finalQueryTbl = {}
-
     local nthSpecifier = 1
-
     local errored
 
     local _, matches = query:gsub( "([^%" .. FDB.ParamChar .. "]*)%" .. FDB.ParamChar .. "([%a]+)([^%" .. FDB.ParamChar .. "]*)", function( prefix, tag, postfix )
