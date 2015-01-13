@@ -4,6 +4,9 @@ local mysqloo_loaded = mysqloo ~= nil -- Checking the result of "require" doesn'
 
 local DATABASE = {}
 
+DATABASE.KEYWORD_AUTOINCREMENT = "auto_increment"
+DATABASE.QUERY_LISTTABLES = "show tables;"
+
 function DATABASE.IsAvailable() -- Can this database type be used at all?
 	return mysqloo_loaded
 end
@@ -25,7 +28,7 @@ function DATABASE:Connect(details)
 		return false, "MysqlOO connection requires name, password and database"
 	end
 	local db = mysqloo.connect( details.host or "localhost",
-								details.name,
+								details.user or details.username or details.name,
 								details.password,
 								details.database,
 								details.port or 3306,
@@ -48,8 +51,7 @@ function DATABASE:Connect(details)
 	return self:IsConnected(), toerr
 end
 
--- A query that does not block. onSuccess is called if query is succesfully executed and onError if we get an error
-function DATABASE:Query(onSuccess, onError, query, ...)
+function DATABASE:RawQuery(onSuccess, onError, query, ...)
 
 	local db = self:RawDB()
 	if not db then
@@ -95,6 +97,13 @@ function DATABASE:Query(onSuccess, onError, query, ...)
 	query:start()
 
 	return query
+end
+
+function DATABASE:Wait(queryobj)
+	if not queryobj then return false end
+
+	queryobj:wait()
+	return true
 end
 
 function DATABASE:GetInsertedId()

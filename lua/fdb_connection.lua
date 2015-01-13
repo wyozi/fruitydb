@@ -20,8 +20,9 @@ function FDB.NewConnect(dbtype, details)
 		return
 	end
 
-	local dbtbl = {} 
+	local dbtbl = {}
 
+	dbtbl.Provider = dbtype
 	dbtbl.Config = details
 
 	setmetatable(dbtbl, dbtype_tbl) -- FDB.dbmeta should be the metatable of dbtype_tbl, which was set in fdb_core in dbtype

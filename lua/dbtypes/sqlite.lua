@@ -1,5 +1,8 @@
 local DATABASE = {}
 
+DATABASE.KEYWORD_AUTOINCREMENT = "autoincrement"
+DATABASE.QUERY_LISTTABLES = "SELECT name FROM sqlite_master WHERE type='table';"
+
 function DATABASE.IsAvailable() -- Can this database type be used at all?
 	return true
 end
@@ -12,8 +15,7 @@ function DATABASE:Connect(host, name, password, dba, port, socket)
 	return true
 end
 
--- A query that does not block. onSuccess is called if query is succesfully executed and onError if we get an error
-function DATABASE:Query(onSuccess, onError, query, ...)
+function DATABASE:RawQuery(onSuccess, onError, query, ...)
 
 	local fquery = FDB.ParseQuery(query, ...)
 	if not fquery then
@@ -33,9 +35,9 @@ function DATABASE:Query(onSuccess, onError, query, ...)
 			FDB.Debug("Query succeeded!")
 		end
 		local laid = sql.QueryValue("SELECT last_insert_rowid()")
-		self.LastAutoIncrement = tonumber(laid) 
+		self.LastAutoIncrement = tonumber(laid)
 		local affected = sql.QueryValue("SELECT changes()")
-		self.LastAffectedRows = tonumber(affected) 
+		self.LastAffectedRows = tonumber(affected)
 		if onSuccess then
 			onSuccess(slquery)
 		end
@@ -46,10 +48,11 @@ function DATABASE:Query(onSuccess, onError, query, ...)
 			onError(err, fquery)
 		end
 	end
+end
 
-	return {
-		wait = function() end -- Workaround for blocking queries, sqlite queries block by default so we don't actually need to do anything here
-	}
+-- SQLite returns immediately, which means we can return true here even if we don't do any waiting
+function DATABASE:Wait()
+	return true
 end
 
 function DATABASE:GetInsertedId()

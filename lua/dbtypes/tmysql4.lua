@@ -4,6 +4,9 @@ local tmysql_loaded = tmysql ~= nil -- Checking the result of "require" doesn't 
 
 local DATABASE = {}
 
+DATABASE.KEYWORD_AUTOINCREMENT = "auto_increment"
+DATABASE.QUERY_LISTTABLES = "show tables;"
+
 function DATABASE.IsAvailable() -- Can this database type be used at all?
 	return tmysql_loaded
 end
@@ -25,23 +28,22 @@ function DATABASE:Connect(details)
 		return false, "TMysql4 connection requires name, password and database"
 	end
 	local db, err = tmysql.initialize( details.host or "localhost",
-								details.name,
+								details.user or details.username or details.name,
 								details.password,
 								details.database,
 								details.port or 3306,
 								details.socket or "",
 								CLIENT_FOUND_ROWS)
-							
+
 	if not db then
-		return false, err	
+		return false, err
 	end
 	self.db = db
 
 	return true
 end
 
--- A query that does not block. onSuccess is called if query is succesfully executed and onError if we get an error
-function DATABASE:Query(onSuccess, onError, query, ...)
+function DATABASE:RawQuery(onSuccess, onError, query, ...)
 
 	local db = self:RawDB()
 	if not db then
@@ -61,21 +63,23 @@ function DATABASE:Query(onSuccess, onError, query, ...)
 
 	db:Query(fquery, function(results)
 		local res = results[1]
-		
+
 		if not res.status then
 			if onError then
 				onError(res.error, fquery)
 			end
 			return
 		end
-		
+
 		if res.affected then self.LastAffectedRows = res.affected end
 		if res.lastid then self.LastAutoIncrement = res.lastid end
-		
+
 		if onSuccess then onSuccess(res.data) end
 	end)
+end
 
-	return query
+function DATABASE:Wait()
+	return false
 end
 
 function DATABASE:GetInsertedId()

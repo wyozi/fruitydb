@@ -1,6 +1,5 @@
 FDB = FDB or {}
-FDB.Version = "1.1"
-FDB.ForceVersion = "sqlite"
+FDB.Version = "2.0"
 
 function FDB.Log(msg, tag)
     -- Again, this if structure looks a bit overcomplicated but it's to ensure as little string manipulations with as little code obfuscation
@@ -29,24 +28,27 @@ include("fdb_config.lua") -- This must be loaded first always so might as well l
 
 hook.Call("FDBConfigLoaded", GAMEMODE)
 
-do -- Load modules
-
-    local submodules = {"connection", "queries" }
-
-    for _,module in ipairs(submodules) do
-        include("fdb_" .. module .. ".lua")
-        FDB.Debug("Loading module " .. module)
-    end
+do
+    include("fdb_connection.lua")
+    include("fdb_queries.lua")
 end
 
 do -- Load database types
+
+    -- Really awkward place for this but..
+    local function conn__tostring(self)
+    	return string.format("FruityDB connection: %s", self.Provider)
+    end
+
     local dbtypes = {"mysqloo", "tmysql4", "sqlite"}
 
     FDB.DatabaseTypes = {}
     FDB.RegisterDatabase = function(dbtype, tbl)
         FDB.DatabaseTypes[dbtype] = tbl
-        setmetatable(tbl, FDB.dbmeta) -- Set dbmeta as the metatable
-        tbl.__index = tbl -- tbl is to be used as a metatable as well
+        
+        setmetatable(tbl, FDB.dbmeta)
+        tbl.__index = tbl
+        tbl.__tostring = conn__tostring
 
         FDB.Debug("Registered database type " .. dbtype)
     end
