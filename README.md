@@ -52,8 +52,11 @@ db:Insert("table", {
     name = "Mike"
 })
 
+-- Simple updating (read as "set `groupid` to 24 on `table` where `name` equals 'Mike'")
+db:Update("table", {groupid = 24}, "name = %s", "Mike")
+
 -- Deletion
-db:Delete("table", "id = %d AND name = %s", 36, "Mike")
+db:Delete("table", "groupid = %d AND name = %s", 24, "Mike")
 
 ```
 

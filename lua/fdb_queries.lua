@@ -119,7 +119,7 @@ function dbmeta:Query(param1, param2, param3, ...)
     if type(param1) == "function" or param1 == nil then
         return self:RawQuery(param1, param2, param3, ...)
     end
-    
+
     local varargs = {...}
     return self:RawQuery(param3, varargs[1], param1, unpack(param2 or {}))
 end
@@ -206,6 +206,23 @@ function dbmeta:Insert(sqltable, datamap)
         table.insert(values, v)
     end)
     return self:Query("INSERT INTO %b %tb VALUES %to;", {sqltable, keys, values})
+end
+
+function dbmeta:Update(sqltable, datamap, condition, ...)
+    local data_placeholders = {}
+    local data_params = {}
+    table.foreach(datamap, function(k, v)
+        table.insert(data_placeholders, "%b = %o")
+        table.insert(data_params, k)
+        table.insert(data_params, v)
+    end)
+
+    local params = {}
+    params[#params+1] = sqltable
+    table.Add(params, data_params)
+    params[#params+1] = FDB.ParseQuery(condition, ...)
+
+    return self:Query("UPDATE %b SET " .. table.concat(data_placeholders, ",") .. " WHERE %l;", params)
 end
 
 function dbmeta:Delete(sqltable, condition, ...)
