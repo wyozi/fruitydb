@@ -43,6 +43,8 @@ db:Query("SELECT * FROM table WHERE groupid = %d AND name = %s", {42, "John"})
 -- %o        = object (escapes based on type; supports number, string and table)
 -- %to       = table of objects (parses into a SQL list)
 -- %tb       = table of backticked strings (parses into a SQL list)
+-- GMod type specific placeholder variables:
+-- %p        = Player (stored as steamid, so works over server restarts)
 
 -- Insertion
 db:Insert("table", {
@@ -54,3 +56,8 @@ db:Insert("table", {
 db:Delete("table", "id = %d AND name = %s", 36, "Mike")
 
 ```
+
+## GMod specific placeholder variables
+FDB comes with type variables that map to some common Garry's Mod types. To use them, your database table schema needs to be as following:
+
+- For ```%p``` the column needs to be of SQL type ```BIGINT```

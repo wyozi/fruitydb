@@ -31,6 +31,7 @@ hook.Call("FDBConfigLoaded", GAMEMODE)
 do
     include("fdb_connection.lua")
     include("fdb_queries.lua")
+    include("fdb_persistentply.lua")
 end
 
 do -- Load database types

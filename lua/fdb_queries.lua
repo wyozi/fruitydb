@@ -39,11 +39,23 @@ FDB.PlaceholderVariables = {
     ["o"] = function(param) -- Object
         local t = type(param)
         local handler
+
         if t == "string" then handler = "s"
         elseif t == "number" then handler = "d"
-        elseif t == "table" then handler = "to" end
+        elseif t == "table" then handler = "to"
+        elseif t == "Player" then handler = "p"
+        end
+
         if not handler then error("Couldn't find object handler for " .. t) end
         return FDB.PlaceholderVariables[handler](param)
+    end,
+    ["p"] = function(param)
+        local pply = FDB.PersistentPlayer(param)
+        if not pply then
+            error("Unable to convert " .. tostring(param) .. " to persistent player")
+        end
+
+        return pply:SteamID64()
     end,
     ["to"] = FDB.CreateTableHandler("o"),
     ["tb"] = FDB.CreateTableHandler("b")
@@ -100,13 +112,14 @@ local dbmeta = FDB.dbmeta
 --    (obsolete) db:Query(onSuccessCb, onErrorCb, query, ...)
 --    (current)  db:Query(query, {...}, onSuccessCb, onErrorCb)
 --  where '...' is vararg of the parameters to replace in query.
--- Both can be used, but the first one is deprecated and can disappear.
+-- Both can be used, but the first one is deprecated and might disappear in the future.
 --
 -- Database types use the first version for RawQuery.
 function dbmeta:Query(param1, param2, param3, ...)
     if type(param1) == "function" or param1 == nil then
         return self:RawQuery(param1, param2, param3, ...)
     end
+    
     local varargs = {...}
     return self:RawQuery(param3, varargs[1], param1, unpack(param2 or {}))
 end
