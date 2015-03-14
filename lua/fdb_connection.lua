@@ -10,6 +10,8 @@ FDB.dbmeta.__index = FDB.dbmeta -- dbmeta is used as a metatable so might as wel
 
 -- A connection that uses the new API
 function FDB.NewConnect(dbtype, details)
+	details = details or {}
+	
 	local dbtype_tbl = FDB.DatabaseTypes[dbtype]
 	if not dbtype_tbl then
 		FDB.Error("Trying to open a db connection using unexpected dbtype " .. dbtype)
@@ -55,7 +57,7 @@ function FDB.Connect(host, name, password, db, port, socket)
 	-- FDB.Connect was used in old version of FDB using signature similar to that of FDB.DeprecatedConnect,
 	-- thus we need to check if that's still the case and possibly use the deprecated API function
 
-	if type(name) == "table" then -- Second argument a table; we're using new FDB API!
+	if type(name) == "table" or not name then -- Second argument a table; we're using new FDB API!
 		return FDB.NewConnect(host, name) -- dbtype, details
 	end
 	return FDB.DeprecatedConnect(host, name, password, db, port, socket)
