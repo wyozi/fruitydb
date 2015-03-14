@@ -199,13 +199,25 @@ end
 --- Inserts data to table. Datamap supports string values
 -- Example datamap (in lua):
 -- { name = "John", age = 19 }
-function dbmeta:Insert(sqltable, datamap)
+function dbmeta:Insert(sqltable, datamap, onSuccess, onError)
     local keys, values = {}, {}
     table.foreach(datamap, function(k, v)
         table.insert(keys, k)
         table.insert(values, v)
     end)
-    return self:Query("INSERT INTO %b %tb VALUES %to;", {sqltable, keys, values})
+
+    -- Modify arguments passed to onSuccess
+    -- from [data] to [affectedRows, insertedId, data]
+    local cb
+    if onSuccess then
+        cb = function(data)
+            local rows = self:GetAffectedRows()
+            local id = self:GetInsertedId()
+            onSuccess(rows, id, data)
+        end
+    end
+
+    return self:Query("INSERT INTO %b %tb VALUES %to;", {sqltable, keys, values}, cb, onError)
 end
 
 function dbmeta:Update(sqltable, datamap, condition, ...)

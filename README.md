@@ -50,7 +50,10 @@ db:Query("SELECT * FROM table WHERE groupid = %d AND name = %s", {42, "John"})
 db:Insert("table", {
     groupid = 36,
     name = "Mike"
-})
+}, function(affectedRowCount, insertedId)
+    -- Print the AUTOINCREMENTed row id
+    print("Added row with id ", insertedId)
+end)
 
 -- Simple updating (read as "set `groupid` to 24 on `table` where `name` equals 'Mike'")
 db:Update("table", {groupid = 24}, "name = %s", "Mike")
