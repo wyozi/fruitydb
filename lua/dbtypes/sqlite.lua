@@ -15,19 +15,7 @@ function DATABASE:Connect(host, name, password, dba, port, socket)
 	return true
 end
 
-function DATABASE:RawQuery(onSuccess, onError, query, ...)
-
-	local fquery = FDB.ParseQuery(query, ...)
-	if not fquery then
-		FDB.Warn("Query not executed: fquery is nil")
-		return
-	end
-
-	if FDB.IsDebug() then -- We double check for debug mode here because string operations are expensive-ish
-		FDB.Debug(query .. " parsed to " .. fquery)
-		FDB.Debug("Starting query " .. fquery)
-	end
-
+function DATABASE:RawQuery(onSuccess, onError, fquery)
 	local slquery = sql.Query(fquery)
 	if slquery ~= false then
 		slquery = slquery or {}

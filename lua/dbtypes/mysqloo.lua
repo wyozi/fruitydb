@@ -51,22 +51,10 @@ function DATABASE:Connect(details)
 	return self:IsConnected(), toerr
 end
 
-function DATABASE:RawQuery(onSuccess, onError, query, ...)
-
+function DATABASE:RawQuery(onSuccess, onError, fquery)
 	local db = self:RawDB()
 	if not db then
 		FDB.Error("RawDB not available!")
-	end
-
-	local fquery = FDB.ParseQuery(query, ...)
-	if not fquery then
-		FDB.Warn("Query not executed: fquery is nil")
-		return
-	end
-
-	if FDB.IsDebug() then -- We double check for debug mode here because string operations are expensive-ish
-		FDB.Debug(query .. " parsed to " .. fquery)
-		FDB.Debug("Starting query " .. fquery)
 	end
 
 	local fdbself = self -- store self here, because we cant access 'self' from onSuccess

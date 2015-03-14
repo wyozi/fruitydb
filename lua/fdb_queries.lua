@@ -114,14 +114,38 @@ local dbmeta = FDB.dbmeta
 --  where '...' is vararg of the parameters to replace in query.
 -- Both can be used, but the first one is deprecated and might disappear in the future.
 --
--- Database types use the first version for RawQuery.
+-- Database types use [onSuccess, onError, parsedQuery]
 function dbmeta:Query(param1, param2, param3, ...)
-    if type(param1) == "function" or param1 == nil then
-        return self:RawQuery(param1, param2, param3, ...)
+    
+    local function FormatQuery(query, ...)
+        local fquery = FDB.ParseQuery(query, ...)
+        if not fquery then
+            FDB.Warn("Query not executed: fquery is nil")
+            return
+        end
+
+        if FDB.IsDebug() then -- We double check for debug mode here because string operations are expensive-ish
+            FDB.Debug(query .. " parsed to " .. fquery)
+            FDB.Debug("Starting query " .. fquery)
+        end
+
+        return fquery
     end
 
-    local varargs = {...}
-    return self:RawQuery(param3, varargs[1], param1, unpack(param2 or {}))
+    -- Obsolete query type
+    if type(param1) == "function" or param1 == nil then
+        local fquery = FormatQuery(param3, ...)
+        if not fquery then return end
+
+        return self:RawQuery(param1, param2, param3, ...)
+
+    -- Current query type
+    else
+        local fquery = FormatQuery(param1, unpack(param2 or {}))
+        if not fquery then return end
+
+        return self:RawQuery(param3, select(1, ...), fquery)
+    end
 end
 
 --- Run query and return results as a table. Is blocking.
