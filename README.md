@@ -1,7 +1,7 @@
 FruityDB
 ========
 
-A MeekroDB like abstraction for Garry's Mod's MysqlOO.
+A library to make database calls more fun
 
 ## Usage
 

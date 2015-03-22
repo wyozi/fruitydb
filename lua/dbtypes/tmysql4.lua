@@ -24,11 +24,11 @@ function DATABASE:RawDB()
 end
 
 function DATABASE:Connect(details)
-	if not details.name or not details.password or not details.database then
-		return false, "TMysql4 connection requires name, password and database"
+	if not details.user or not details.password or not details.database then
+		return false, "TMysql4 connection requires username, password and database"
 	end
 	local db, err = tmysql.initialize( details.host or "localhost",
-								details.user or details.username or details.name,
+								details.user,
 								details.password,
 								details.database,
 								details.port or 3306,

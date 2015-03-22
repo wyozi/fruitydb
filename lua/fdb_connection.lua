@@ -22,6 +22,10 @@ function FDB.NewConnect(dbtype, details)
 		return
 	end
 
+	-- Normalize connection details
+	-- 'user' can be provided as 'user', 'name' or 'username'
+	details.user = details.user or details.name or details.username
+
 	local dbtbl = {}
 
 	dbtbl.Provider = dbtype
