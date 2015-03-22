@@ -54,6 +54,7 @@ function DATABASE:RawQuery(onSuccess, onError, fquery)
 		local res = results[1]
 
 		if not res.status then
+			FDB.Warn("Query failed! SQL: " .. fquery .. ". Err: " .. res.error)
 			if onError then
 				onError(res.error, fquery)
 			end
