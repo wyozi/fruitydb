@@ -205,18 +205,26 @@ function dbmeta:BQueryFirstField(query, ...)
     local res, err = self:BlockingQuery(query, ...)
     if res then
         local firstrow = res[1]
-        local fkey = table.GetFirstKey(firstrow)
-        return firstrow[fkey]
+        if firstrow then
+            local fkey = table.GetFirstKey(firstrow)
+            return firstrow[fkey]
+        end
     end
     return false, err
 end
 
 --- Run query and return the first row.
 function dbmeta:QueryFirstField(query, params, onSuccess, onError)
-    return self:Query(query, params, function(data)
-        local firstrow = data[1]
-        local fkey = table.GetFirstKey(firstrow)
-        onSuccess(firstrow[fkey])
+    return self:QueryFirstRow(query, params, function(row)
+        local field = nil
+        if row then
+            local key = table.GetFirstKey(row)
+            if key then
+                field = row[key]
+            end
+        end
+
+        onSuccess(field)
     end, onError)
 end
 
